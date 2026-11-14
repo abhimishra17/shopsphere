@@ -1,6 +1,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import EntryPage from './pages/entry/EntryPage';
+import CustomerLayout from './layouts/CustomerLayout';
+import StorefrontPage from './pages/customer/StorefrontPage';
 import PortalPlaceholder from './pages/common/PortalPlaceholder';
 
 /**
@@ -9,7 +11,7 @@ import PortalPlaceholder from './pages/common/PortalPlaceholder';
  * Maps directly to the project flowchart:
  * 
  *   [A: ShopSphere Entry] -> [B: User Type]
- *                               ├── [C: Customer]  -> /store, /login
+ *                               ├── [C: Customer]  -> /store (CustomerLayout Shell)
  *                               ├── [D: Seller]    -> /seller/dashboard, /seller/register
  *                               └── [E: Admin]     -> /admin/dashboard, /admin/login
  */
@@ -23,37 +25,53 @@ export default function App() {
       <Route path="/" element={<EntryPage />} />
 
       {/* -----------------------------------------------------------------------
-          CUSTOMER BRANCH (Flowchart Step C)
-          Routes:
-            - /store : Product catalog, categories, search, cart
-            - /login : Customer login & registration (Step F in flowchart)
+          CUSTOMER BRANCH (Flowchart Step C) - Wrapped in CustomerLayout Shell!
+          All routes here automatically render Navbar on top and Footer at bottom.
          ----------------------------------------------------------------------- */}
-      <Route 
-        path="/store" 
-        element={
-          <PortalPlaceholder 
-            portalName="Customer Storefront" 
-            description="The customer shopping catalog with search, filtering, product variants, and cart management." 
-            nextStep="Product listings grid, category filters, and product details page."
-          />
-        } 
-      />
+      <Route element={<CustomerLayout />}>
+        {/* /store : Storefront with hero banner, categories, and auth status */}
+        <Route path="/store" element={<StorefrontPage />} />
+
+        {/* /cart : Shopping cart view (upcoming in FE-US-06) */}
+        <Route 
+          path="/cart" 
+          element={
+            <PortalPlaceholder 
+              portalName="Shopping Cart" 
+              description="Review selected items, update quantities, and see seller groupings." 
+              nextStep="Cart items table, quantity incrementor, and price breakdown."
+            />
+          } 
+        />
+      </Route>
+
+      {/* -----------------------------------------------------------------------
+          CUSTOMER AUTHENTICATION (Flowchart Step F)
+          Upcoming in FE-US-02 (Login and Register Forms)
+         ----------------------------------------------------------------------- */}
       <Route 
         path="/login" 
         element={
           <PortalPlaceholder 
-            portalName="Customer Authentication" 
-            description="Login and registration for shoppers with email and password." 
-            nextStep="Login/Register forms with JWT token handling."
+            portalName="Customer Sign In" 
+            description="Login with email and password to receive JWT token." 
+            nextStep="FE-US-02: Customer Login form with Axios connection to /api/v1/auth/login."
+          />
+        } 
+      />
+      <Route 
+        path="/register" 
+        element={
+          <PortalPlaceholder 
+            portalName="Customer Registration" 
+            description="Create a new customer account." 
+            nextStep="FE-US-02: Customer Register form with validation and automatic login."
           />
         } 
       />
 
       {/* -----------------------------------------------------------------------
           SELLER BRANCH (Flowchart Step D)
-          Routes:
-            - /seller/dashboard : Seller product management, inventory, and orders (Step Q)
-            - /seller/register  : Merchant onboarding and KYC verification (Step P)
          ----------------------------------------------------------------------- */}
       <Route 
         path="/seller/dashboard" 
@@ -78,9 +96,6 @@ export default function App() {
 
       {/* -----------------------------------------------------------------------
           ADMIN BRANCH (Flowchart Step E)
-          Routes:
-            - /admin/dashboard : Super-admin dashboard for user/seller moderation (Step W)
-            - /admin/login     : Secure administrator login (Step V)
          ----------------------------------------------------------------------- */}
       <Route 
         path="/admin/dashboard" 
@@ -105,7 +120,6 @@ export default function App() {
 
       {/* -----------------------------------------------------------------------
           FALLBACK ROUTE
-          Any unmatched route redirects back to the main Entry Page.
          ----------------------------------------------------------------------- */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
