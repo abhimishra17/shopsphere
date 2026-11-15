@@ -1,32 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, ArrowRight, ShieldCheck, Truck, RotateCcw } from 'lucide-react';
+import { ArrowRight, Truck, ShieldCheck, RotateCcw, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+import ProductCard from '../../components/ProductCard';
 
 /**
- * StorefrontPage Component
+ * StorefrontPage Component (FE-US-03)
  * 
- * The default landing page for customers inside the CustomerLayout shell.
- * Displays banner, category quick links, and platform value props.
+ * Customer marketplace homepage featuring:
+ * - Dynamic category navigation pills from /api/v1/categories/tree
+ * - Featured products grid from /api/v1/products/featured
+ * - Multi-vendor value propositions & trust badges
  */
 export default function StorefrontPage() {
   const { user, isAuthenticated } = useAuth();
 
-  const categories = [
-    { name: 'Electronics', count: '1,200+ items' },
-    { name: 'Fashion & Apparel', count: '3,400+ items' },
-    { name: 'Home & Kitchen', count: '850+ items' },
-    { name: 'Beauty & Health', count: '620+ items' },
-  ];
+  const [categories, setCategories] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        setLoading(true);
+        // Fetch categories and featured products in parallel from backend APIs
+        const [catRes, prodRes] = await Promise.all([
+          api.get('/categories/tree'),
+          api.get('/products/featured'),
+        ]);
+
+        setCategories(catRes.data);
+        setFeaturedProducts(prodRes.data);
+      } catch (err) {
+        console.error('Failed to load storefront data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomeData();
+  }, []);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
       
       {/* Hero Welcome Banner */}
       <div className="bg-white border border-gray-200 rounded-2xl p-8 sm:p-12 shadow-sm relative overflow-hidden">
         <div className="max-w-2xl space-y-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 bg-gray-100 px-3 py-1 rounded-md">
-            Customer Storefront Active
+            Verified Multi-Vendor Marketplace
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
             Discover Multi-Vendor Products in One Marketplace.
@@ -40,60 +63,98 @@ export default function StorefrontPage() {
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-3">
-            {!isAuthenticated ? (
-              <>
-                <Link
-                  to="/login"
-                  className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm font-medium transition flex items-center gap-2"
-                >
-                  <span>Sign In to Your Account</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  to="/register"
-                  className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition"
-                >
-                  Create an Account
-                </Link>
-              </>
-            ) : (
-              <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-lg font-medium flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                Logged in as: {user?.email} ({user?.role})
-              </div>
+            <Link
+              to="/products"
+              className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-sm"
+            >
+              <span>Browse All Products</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+
+            {!isAuthenticated && (
+              <Link
+                to="/register"
+                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition"
+              >
+                Create Account
+              </Link>
             )}
           </div>
         </div>
       </div>
 
-      {/* Featured Category Quick Pills */}
+      {/* Dynamic Categories Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">Explore by Department</h2>
-          <span className="text-xs text-gray-500">Upcoming in BE-US-04 & FE-US-04</span>
+          <h2 className="text-xl font-bold text-gray-900">Explore by Department</h2>
+          <Link to="/products" className="text-xs font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-1">
+            <span>View All</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {categories.map((cat, idx) => (
-            <div
-              key={idx}
-              className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-400 transition-colors shadow-sm"
-            >
-              <h3 className="font-semibold text-gray-900 text-sm">{cat.name}</h3>
-              <p className="text-xs text-gray-500 mt-1">{cat.count}</p>
-            </div>
-          ))}
+        {loading ? (
+          <div className="h-28 flex items-center justify-center text-gray-400">
+            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading departments...
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                to={`/products?category=${cat.slug}`}
+                className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-400 hover:shadow-sm transition-all group"
+              >
+                <h3 className="font-semibold text-gray-900 text-sm group-hover:text-gray-700">
+                  {cat.name}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                  {cat.description || `${cat.subCategories?.length || 0} subcategories`}
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Featured Products Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Featured Products</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Handpicked trending items from verified sellers</p>
+          </div>
+          <Link to="/products" className="text-xs font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-1">
+            <span>See more</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
+
+        {loading ? (
+          <div className="h-48 flex items-center justify-center text-gray-400">
+            <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading featured catalog...
+          </div>
+        ) : featuredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center text-gray-500 text-sm bg-white rounded-xl border border-gray-200">
+            No featured products currently available.
+          </div>
+        )}
       </div>
 
       {/* Trust & Guarantee Badges */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-200 text-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-gray-200 text-center">
         <div className="flex flex-col items-center space-y-2 p-4">
           <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-800">
             <Truck className="w-5 h-5" />
           </div>
           <h4 className="text-sm font-semibold text-gray-900">Multi-Vendor Fulfillment</h4>
-          <p className="text-xs text-gray-500 max-w-xs">Direct dispatch from verified independent merchants.</p>
+          <p className="text-xs text-gray-500 max-w-xs">Direct dispatch from independent, verified merchants.</p>
         </div>
 
         <div className="flex flex-col items-center space-y-2 p-4">
@@ -116,4 +177,3 @@ export default function StorefrontPage() {
     </div>
   );
 }
-
