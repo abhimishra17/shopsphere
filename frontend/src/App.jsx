@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import EntryPage from './pages/entry/EntryPage';
 import CustomerLayout from './layouts/CustomerLayout';
 import StorefrontPage from './pages/customer/StorefrontPage';
+import ProductsPage from './pages/customer/ProductsPage';
 import PortalPlaceholder from './pages/common/PortalPlaceholder';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
@@ -33,6 +34,9 @@ export default function App() {
       <Route element={<CustomerLayout />}>
         {/* /store : Storefront with hero banner, categories, and auth status */}
         <Route path="/store" element={<StorefrontPage />} />
+
+        {/* /products : Full product catalog discovery with search and filters */}
+        <Route path="/products" element={<ProductsPage />} />
 
         {/* /cart : Shopping cart view (upcoming in FE-US-06) */}
         <Route

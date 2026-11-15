@@ -6,6 +6,13 @@ import { useAuth } from '../context/AuthContext';
 export default function Navbar() {
     const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
+    const [searchTerm, setSearchTerm] = React.useState('');
+
+    const handleSearchSubmit = (e) => {
+        if (e.key === 'Enter' && searchTerm.trim()) {
+            navigate(`/products?keyword=${encodeURIComponent(searchTerm.trim())}`);
+        }
+    };
 
     const handleLogout = () => {
         logout();
@@ -42,6 +49,9 @@ export default function Navbar() {
                             <input
                                 type="text"
                                 placeholder="Search products, brands, and categories..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={handleSearchSubmit}
                                 className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-900 focus:bg-white transition"
                             />
                         </div>
